@@ -35,7 +35,7 @@ public class base1Script : MonoBehaviour {
     void OnPress(int help)
     {
         audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
-        GetComponent<KMSelectable>().AddInteractionPunch();
+        Buttons[help].AddInteractionPunch();
         if (solved == false)
         {
             if (help + 1 == 10)
