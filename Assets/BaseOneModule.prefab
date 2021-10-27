@@ -2892,7 +2892,7 @@ MonoBehaviour:
   - {fileID: 114331524030227026}
   - {fileID: 114610773077025276}
   IsPassThrough: 0
-  ChildRowLength: 1
+  ChildRowLength: 5
   Highlight: {fileID: 114534591838617546}
   SelectableColliders: []
   DefaultSelectableIndex: 0
@@ -2961,7 +2961,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ModuleType: base1
   ModuleDisplayName: Base-1
-  RequiresTimerVisibility: 1
+  RequiresTimerVisibility: 0
 --- !u!114 &114746048754549462
 MonoBehaviour:
   m_ObjectHideFlags: 1
