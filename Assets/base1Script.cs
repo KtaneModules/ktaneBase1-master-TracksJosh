@@ -5,92 +5,90 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using Rnd = UnityEngine.Random;
 
-public class base1Script : MonoBehaviour {
+public class base1Script : MonoBehaviour
+{
 
-    public KMSelectable[] Buttons;
-    public TextMesh Screen;
-    private int number = 0;
-    private string oof = "";
-    public KMBombModule Bomb;
-    public KMAudio audio;
-    int iteration = 0;
-    bool funny = false;
-    bool solved = false;
-    static int moduleIdCounter = 1;
-    int moduleId;
+    public KMBombModule Module;
+    public KMBombInfo BombInfo;
+    public KMAudio Audio;
+    public KMSelectable[] NumberButtons;
+    public KMSelectable WhatTheFuck;
+    public TextMesh ScreenText;
+    public GameObject TheButtonThatDoesTheThing;
+    public GameObject TheParentOfTheButtonThatDoesTheThing;
 
-    // Use this for initialization
-    void Start () {
-        moduleId = moduleIdCounter++;
-        for (int i = 0; i < Buttons.Length; i++)
-        {
-            int j = i;
-            Buttons[i].OnInteract += delegate { OnPress(j); return false; };
-        }
-        number = Rnd.Range(1,10);
-        for(int i = 0; i < number; i++)
-        {
-            oof += "1";
-        }
-        Screen.text = "";
-        Debug.LogFormat("[Base-1 #{0}] The displayed number is {1} which in Base-1 is {2}", moduleId, number, oof);
-        Bomb.OnActivate += ShowDisplay;
-	}
+    private int _moduleId;
+    private static int _moduleIdCounter = 1;
+    private bool _moduleSolved;
 
-    void ShowDisplay()
+    private int _answer;
+    private string _text;
+    private bool _canDoTheFunnyThing = true;
+
+    private void Start()
     {
-        Screen.text = oof;
+        _moduleId = _moduleIdCounter++;
+        _answer = Rnd.Range(1, 10);
+        for (int i = 0; i < _answer; i++)
+            _text += "1";
+        ScreenText.text = _text;
+        Debug.LogFormat("[Base-1 #{0}] Screen is {1}, which in Base-1 is {2}.", _moduleId, _text, _answer);
+
+        for (int i = 0; i < NumberButtons.Length; i++)
+            NumberButtons[i].OnInteract += NumberButtonPress(i);
+        WhatTheFuck.OnInteract += WhatTheFuckPress;
     }
 
-    void OnPress(int help)
+    private KMSelectable.OnInteractHandler NumberButtonPress(int button)
     {
-        if (help + 1 == 10 && funny)
-            return;
-        audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, Buttons[help].transform);
-        Buttons[help].AddInteractionPunch();
-        if (solved == false)
+        return delegate ()
         {
-            if (help + 1 == 10)
+            if (_moduleSolved)
+                return false;
+            if (button + 1 == _answer)
             {
-                funny = true;
-                StartCoroutine(ByeBye(funny));
-                audio.PlaySoundAtTransform("meme", transform);
-                Debug.LogFormat("[Base-1 #{0}] Pressed button ?????, woooooooooowooooooooo", moduleId);
-            }
-            else if (help + 1 == number)
-            {
-                Bomb.HandlePass();
-                solved = true;
-                Debug.LogFormat("[Base-1 #{0}] Pressed button {1}, module solved", moduleId, help + 1);
+                Module.HandlePass();
+                _moduleSolved = true;
+                Debug.LogFormat("[Base-1 #{0}] Pressed {1}. Cool.", _moduleId, button + 1);
             }
             else
             {
-                Bomb.HandleStrike();
-                Debug.LogFormat("[Base-1 #{0}] Pressed button {1}, strike", moduleId, help + 1);
+                Module.HandleStrike();
+                Debug.LogFormat("[Base-1 #{0}] Pressed {1} instead of {2}. Literally how did you screw this up.", _moduleId, button + 1, _answer);
             }
+            Debug.LogFormat("press");
+            return false;
+        };
+    }
+
+    private bool WhatTheFuckPress()
+    {
+        if (_canDoTheFunnyThing)
+            StartCoroutine(WOOOOOOWOOOOOOOOOOOOOOOO());
+        return false;
+    }
+
+    private IEnumerator WOOOOOOWOOOOOOOOOOOOOOOO()
+    {
+        Audio.PlaySoundAtTransform("WOOOOOWOOOOOOOOOOOOOO", transform);
+        _canDoTheFunnyThing = false;
+        var duration = 2f;
+        var elapsed = 0f;
+        while (elapsed < duration)
+        {
+            TheButtonThatDoesTheThing.transform.localPosition = new Vector3(Easing.InOutQuad(elapsed, 0.06f, 0f, duration), Easing.InOutQuad(elapsed, 0.015f, 0.5f, duration), Easing.InOutQuad(elapsed, -0.04f, 0f, duration));
+            TheButtonThatDoesTheThing.transform.localEulerAngles = new Vector3(0f, Easing.InQuad(elapsed, 0f, -1440f, duration), 0f);
+            TheButtonThatDoesTheThing.transform.localScale = new Vector3(Easing.InOutQuad(elapsed, 0.125f, 0f, duration), Easing.InOutQuad(elapsed, 0.05f, 0f, duration), Easing.InOutQuad(elapsed, 0.125f, 0f, duration));
+            TheParentOfTheButtonThatDoesTheThing.transform.localEulerAngles = new Vector3(0f, Easing.InQuad(elapsed, 0f, 720f, duration), 0f);
+            yield return null;
+            elapsed += Time.deltaTime;
         }
     }
 
-    IEnumerator ByeBye(bool seeYou)
-    { 
-        if (iteration == 150)
-        {
-            Buttons[9].gameObject.SetActive(false);
-        }
-        if (seeYou == true)
-        {
-            iteration++;
-            Buttons[9].transform.localPosition += new Vector3(0f,0.01f,0f);
-            yield return new WaitForSeconds(0.01f);
-            StartCoroutine(ByeBye(seeYou));
-        }
-    }
-
-    //twitch plays
-    #pragma warning disable 414
+#pragma warning disable 414
     private readonly string TwitchHelpMessage = @"!{0} press <label> [Presses the button with the specified label]";
-    #pragma warning restore 414
-    IEnumerator ProcessTwitchCommand(string command)
+#pragma warning restore 414
+    private IEnumerator ProcessTwitchCommand(string command)
     {
         string[] parameters = command.Split(' ');
         if (Regex.IsMatch(parameters[0], @"^\s*press\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
@@ -98,29 +96,47 @@ public class base1Script : MonoBehaviour {
             if (parameters.Length > 2)
             {
                 yield return "sendtochaterror Too many parameters!";
+                yield break;
             }
-            else if (parameters.Length == 2)
+            if (parameters.Length == 1)
             {
-                string[] labels = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "?????" };
-                if (!labels.Contains(parameters[1]) || (parameters[1].Equals("?????") && funny))
+                yield return "sendtochaterror Please specify the label of a button to press!";
+                yield break;
+            }
+            if (parameters.Length == 2)
+            {
+                string[] labels = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "???" };
+                if (!labels.Contains(parameters[1]))
                 {
                     yield return "sendtochaterror!f The specified label '" + parameters[1] + "' is not on any buttons!";
                     yield break;
                 }
                 yield return null;
-                Buttons[Array.IndexOf(labels, parameters[1])].OnInteract();
-            }
-            else if (parameters.Length == 1)
-            {
-                yield return "sendtochaterror Please specify the label of a button to press!";
+                if (parameters[1] == "???")
+                {
+                    if (_canDoTheFunnyThing)
+                    {
+                        WhatTheFuck.OnInteract();
+                        yield break;
+                    }
+                    else
+                    {
+                        yield return "sendtochaterror You already did the funny haha";
+                        yield break;
+                    }
+                }
+                else
+                {
+                    NumberButtons[int.Parse(parameters[1]) - 1].OnInteract();
+                    yield break;
+                }
             }
         }
     }
 
-    IEnumerator TwitchHandleForcedSolve()
+    private IEnumerator TwitchHandleForcedSolve()
     {
-        Buttons[number - 1].OnInteract();
-        yield return new WaitForSeconds(.1f);
+        NumberButtons[_answer - 1].OnInteract();
+        yield break;
     }
-
 }
